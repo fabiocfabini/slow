@@ -24,12 +24,6 @@ class Token:
     value: TokenValue
     line: int
 
-    def __repr__(self) -> str:
-        return f"Token({self.kind}, {self.value}, {self.line})"
-
-    def __str__(self) -> str:
-        return self.__repr__()
-
     def __format__(self, __format_spec: str) -> str:
         match __format_spec:
             case "kind":

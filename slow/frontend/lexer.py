@@ -13,22 +13,25 @@ class Lexer:
     def next(self) -> Token:
         self._skip_whitespace()
 
+        token: Token
         if self._is_at_end():
             return self._make_token(TokenKind.EOF)
-
         char: str = self._peek()
         if char.isdigit():
             return self._number()
 
-        token: Token
         match char:
             case "+":
                 token = self._make_token(TokenKind.ADD)
+                self._advance()
             case "-":
                 token = self._make_token(TokenKind.SUB)
+                self._advance()
             case _:
                 token = self._make_error(f"Unexpected character: {char}")
+                self._advance()
 
+        self._rebase()
         return token
 
     def _is_at_end(self) -> bool:
@@ -63,12 +66,7 @@ class Lexer:
         self._rebase()
 
     def _make_token(self, kind: TokenKind, value: TokenValue = None) -> Token:
-        token = Token(kind, value, self.line)
-
-        self._advance()
-        self._rebase()
-
-        return token
+        return Token(kind, value, self.line)
 
     def _make_error(self, msg: str) -> Token:
         # TODO: Improve reporting (file:line:column lex error: msg)
@@ -79,11 +77,13 @@ class Lexer:
             self._advance()
 
         value: int = int(self.source[self.start : self.current])
+        self._rebase()
+
         return self._make_token(TokenKind.INTEGER, value)
 
 
 if __name__ == "__main__":
-    lexer = Lexer("1 + 2")
+    lexer = Lexer("1-12+123")
 
     while (tok := lexer.next()).kind != TokenKind.EOF:
         print(tok)
