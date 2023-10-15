@@ -65,7 +65,7 @@ class Lexer:
                     self._advance()
                 case "/":
                     self._advance()
-                    if self._peek() == "/":
+                    if not self._is_at_end() and self._peek() == "/":
                         self._advance()
                         while not self._is_at_end() and self._peek() != "\n":
                             self._advance()
