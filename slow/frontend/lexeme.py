@@ -8,10 +8,14 @@ class TokenKind(Enum):
     EOF = auto()
     ERROR = auto()
 
+    # Single-character
+    LPAREN = auto()
+    RPAREN = auto()
+
     # Values
     INTEGER = auto()
 
-    # ARITHMETIC OPERATORS
+    # Arithmetic operators
     ADD = auto()
     SUB = auto()
     MUL = auto()

@@ -29,6 +29,8 @@ def test_whitespace() -> None:
 
 @pytest.mark.parametrize("text,token", [
     ("// This is a comment", Token(TokenKind.EOF, None, 1)),
+    ("(", Token(TokenKind.LPAREN, None, 1)),
+    (")", Token(TokenKind.RPAREN, None, 1)),
     ("123", Token(TokenKind.INTEGER, 123, 1)),
     ("+", Token(TokenKind.ADD, None, 1)),
     ("-", Token(TokenKind.SUB, None, 1)),

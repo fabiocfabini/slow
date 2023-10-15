@@ -21,6 +21,12 @@ class Lexer:
             return self._number()
 
         match char:
+            case "(":
+                token = self._make_token(TokenKind.LPAREN)
+                self._advance()
+            case ")":
+                token = self._make_token(TokenKind.RPAREN)
+                self._advance()
             case "+":
                 token = self._make_token(TokenKind.ADD)
                 self._advance()
