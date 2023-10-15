@@ -14,6 +14,8 @@ class TokenKind(Enum):
     # ARITHMETIC OPERATORS
     ADD = auto()
     SUB = auto()
+    MUL = auto()
+    DIV = auto()
 
 
 TokenValue = Union[int, str, None]

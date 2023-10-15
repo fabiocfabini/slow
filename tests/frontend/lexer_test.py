@@ -32,6 +32,8 @@ def test_whitespace() -> None:
     ("123", Token(TokenKind.INTEGER, 123, 1)),
     ("+", Token(TokenKind.ADD, None, 1)),
     ("-", Token(TokenKind.SUB, None, 1)),
+    ("*", Token(TokenKind.MUL, None, 1)),
+    ("/", Token(TokenKind.DIV, None, 1)),
 ])
 def test_single(text: str, token: Token) -> None:
     lexer = Lexer(text)

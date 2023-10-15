@@ -27,6 +27,12 @@ class Lexer:
             case "-":
                 token = self._make_token(TokenKind.SUB)
                 self._advance()
+            case "*":
+                token = self._make_token(TokenKind.MUL)
+                self._advance()
+            case "/":
+                token = self._make_token(TokenKind.DIV)
+                self._advance()
             case _:
                 token = self._make_error(f"Unexpected character: {char}")
                 self._advance()
