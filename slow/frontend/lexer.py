@@ -8,7 +8,7 @@ class Lexer:
     source: str
     start: int = 0
     current: int = 0
-    line: int = 0
+    line: int = 1
 
     def next(self) -> Token:
         self._skip_whitespace()
@@ -43,6 +43,9 @@ class Lexer:
     def _advance(self) -> None:
         self.current += 1
 
+    def _regress(self) -> None:
+        self.current -= 1
+
     def _peek(self) -> str:
         return self.source[self.current]
 
@@ -60,6 +63,15 @@ class Lexer:
                 case "\n":
                     self.line += 1
                     self._advance()
+                case "/":
+                    self._advance()
+                    if self._peek() == "/":
+                        self._advance()
+                        while not self._is_at_end() and self._peek() != "\n":
+                            self._advance()
+                    else:
+                        self._regress()
+                        return
                 case _:
                     break
 
