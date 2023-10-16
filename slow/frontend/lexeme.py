@@ -2,6 +2,7 @@ from enum import Enum, auto
 from typing import Union
 from dataclasses import dataclass
 
+from ..ast.binary import BinaryOperator
 
 class TokenKind(Enum):
     # Special
@@ -29,6 +30,19 @@ class Token:
     kind: TokenKind
     value: TokenValue
     line: int
+
+    def to_binary_operator(self) -> BinaryOperator:
+        match self.kind:
+            case TokenKind.ADD:
+                return BinaryOperator.ADD
+            case TokenKind.SUB:
+                return BinaryOperator.SUB
+            case TokenKind.MUL:
+                return BinaryOperator.MUL
+            case TokenKind.DIV:
+                return BinaryOperator.DIV
+            case _:
+                raise ValueError(f"Token {self} is not a binary operator")
 
     def __format__(self, __format_spec: str) -> str:
         match __format_spec:
