@@ -36,17 +36,17 @@ class ExpressionParseRule:
 
 @dataclass
 class Parser:
-    lexer: Optional[Lexer] = None
-    current: Optional[Token] = None
-    previous: Optional[Token] = None
-    had_error: bool = False
-    panic_mode: bool = False
+    _lexer: Optional[Lexer] = None
+    _current: Optional[Token] = None
+    _previous: Optional[Token] = None
+    _had_error: bool = False
+    _panic_mode: bool = False
 
-    expression_rule_table: ClassVar[Dict[TokenKind, ExpressionParseRule]]
+    _expression_rule_table: ClassVar[Dict[TokenKind, ExpressionParseRule]]
 
 # pylint: disable=C0301
     def __post_init__(self) -> None:
-        Parser.expression_rule_table = {
+        Parser._expression_rule_table = {
             TokenKind.EOF       : ExpressionParseRule(            None,           None, Precedence.NO_PRECEDENCE),
             TokenKind.ERROR     : ExpressionParseRule(            None,           None, Precedence.NO_PRECEDENCE),
             TokenKind.LPAREN    : ExpressionParseRule(Parser._grouping,           None, Precedence.NO_PRECEDENCE),
@@ -61,7 +61,7 @@ class Parser:
 
     def parse(self, source: str) -> Optional[Node]:
         self._reset()
-        self.lexer = Lexer(source)
+        self._lexer = Lexer(source)
 
         self._advance()
 
@@ -71,48 +71,48 @@ class Parser:
         pass
 
     def _advance(self) -> None:
-        self.previous = self.current
+        self._previous = self._current
 
         while True:
-            self.current = self.lexer.next()
+            self._current = self._lexer.next()
 
-            if self.current.kind != TokenKind.ERROR:
+            if self._current.kind != TokenKind.ERROR:
                 break
 
             self._lexer_error()
 
     def _lexer_error(self) -> None:
-        if self.panic_mode:
+        if self._panic_mode:
             return
 
-        self.had_error = True
-        self.panic_mode = True
+        self._had_error = True
+        self._panic_mode = True
 
-        assert self.current is not None
-        if self.current.kind == TokenKind.ERROR:
-            print(f"Lexer error: {self.current.value}")
+        assert self._current is not None
+        if self._current.kind == TokenKind.ERROR:
+            print(f"Lexer error: {self._current.value}")
 
     def _parser_error(self, message: str) -> None:
-        if self.panic_mode:
+        if self._panic_mode:
             return
 
-        self.had_error = True
-        self.panic_mode = True
+        self._had_error = True
+        self._panic_mode = True
 
         print(f"Parser error: {message}")
 
     def _match(self, kind: TokenKind) -> bool:
-        assert self.current is not None
-        if self.current.kind == kind:
+        assert self._current is not None
+        if self._current.kind == kind:
             self._advance()
             return True
 
         return False
 
     def _integer(self) -> Optional[Node]:
-        assert self.previous is not None
-        assert isinstance(self.previous.value, int)
-        return LiteralIntegerNode(self.previous.value, self.previous.line)
+        assert self._previous is not None
+        assert isinstance(self._previous.value, int)
+        return LiteralIntegerNode(self._previous.value, self._previous.line)
 
     def _grouping(self) -> Optional[Node]:
         expression = self._expression()
@@ -121,16 +121,16 @@ class Parser:
             assert expression is not None
             return expression
 
-        self._parser_error(f"Expected ')' after expression. Got {self.current.value}")
+        self._parser_error(f"Expected ')' after expression. Got {self._current.value}")
         return None
 
     def _binary(self, lhs: Node) -> Optional[Node]:
-        tok_op = self.previous
+        tok_op = self._previous
 
         assert tok_op is not None
-        rhs = self._parse_precedence(Parser.expression_rule_table[tok_op.kind].precedence)
+        rhs = self._parse_precedence(Parser._expression_rule_table[tok_op.kind].precedence)
 
-        if not self.panic_mode:
+        if not self._panic_mode:
             assert rhs is not None
             return BinaryNode(lhs, rhs, tok_op.to_binary_operator())
 
@@ -142,23 +142,23 @@ class Parser:
     def _parse_precedence(self, precedence: Precedence) -> Optional[Node]:
         self._advance()
 
-        assert self.previous is not None
-        prefix_rule =  Parser.expression_rule_table[self.previous.kind].prefix
+        assert self._previous is not None
+        prefix_rule =  Parser._expression_rule_table[self._previous.kind].prefix
 
         if prefix_rule is None:
-            self._parser_error(f"Expected expression. Got {self.previous.value}")
+            self._parser_error(f"Expected expression. Got {self._previous.value}")
             return None
 
         lhs = prefix_rule(self)
 
         rule: ExpressionParseRule
-        assert self.current is not None
-        while precedence.value <= (rule := Parser.expression_rule_table[self.current.kind]).precedence.value:  # pylint: disable=C0301
+        assert self._current is not None
+        while precedence.value <= (rule := Parser._expression_rule_table[self._current.kind]).precedence.value:  # pylint: disable=C0301
             self._advance()
             infix_rule = rule.infix
 
             if infix_rule is None:
-                self._parser_error(f"Expected binary operator. Got {self.current.value}")
+                self._parser_error(f"Expected binary operator. Got {self._current.value}")
                 return None
 
             assert lhs is not None
