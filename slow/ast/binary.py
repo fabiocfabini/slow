@@ -9,8 +9,8 @@ class BinaryOperator(Enum):
     SUB = auto()
     MUL = auto()
     DIV = auto()
-    
-    def __str__(self):
+
+    def __str__(self) -> str:
         match self:
             case BinaryOperator.ADD:
                 return "+"

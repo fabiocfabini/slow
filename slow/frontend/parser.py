@@ -60,20 +60,24 @@ class Parser:
 # pylint: enable=C0301
 
     def parse(self, source: str) -> Optional[Node]:
-        self._reset()
-        self._lexer = Lexer(source)
+        self._reset(source)
 
         self._advance()
 
         return self._expression()
 
-    def _reset(self) -> None:
-        pass
+    def _reset(self, source: str) -> None:
+        self._lexer = Lexer(source)
+        self._current = None
+        self._previous = None
+        self._had_error = False
+        self._panic_mode = False
 
     def _advance(self) -> None:
         self._previous = self._current
 
         while True:
+            assert self._lexer is not None
             self._current = self._lexer.next()
 
             if self._current.kind != TokenKind.ERROR:
@@ -121,6 +125,7 @@ class Parser:
             assert expression is not None
             return expression
 
+        assert self._current is not None
         self._parser_error(f"Expected ')' after expression. Got {self._current.value}")
         return None
 
