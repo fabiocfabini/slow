@@ -10,3 +10,6 @@ class LiteralIntegerNode(Node):
 
     def accept(self, visitor: NodeVisitor) -> None:
         visitor.visit_literal_integer(self)
+
+    def __str__(self) -> str:
+        return f"{self.value}"

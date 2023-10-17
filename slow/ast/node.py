@@ -8,6 +8,10 @@ class Node(ABC):
     def accept(self, visitor: NodeVisitor) -> None:
         pass
 
+    @abstractmethod
+    def __str__(self) -> str:
+        pass
+
 
 class NodeVisitor(ABC):
     @abstractmethod
