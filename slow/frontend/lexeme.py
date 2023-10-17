@@ -1,5 +1,5 @@
 from enum import Enum, auto
-from typing import Union, Tuple
+from typing import Union
 from dataclasses import dataclass
 
 from ..ast.binary import BinaryOperator
@@ -30,7 +30,6 @@ class Token:
     kind: TokenKind
     value: TokenValue
     line: int
-    span: Tuple[int, int]
 
     def to_binary_operator(self) -> BinaryOperator:
         match self.kind:
@@ -53,7 +52,5 @@ class Token:
                 return str(self.value)
             case "line":
                 return str(self.line)
-            case "span":
-                return str(self.span)
             case _:
                 return self.__repr__()
