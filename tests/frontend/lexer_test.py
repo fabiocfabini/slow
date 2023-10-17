@@ -17,9 +17,9 @@ def test_lines() -> None:
         123 // This is a third comment
     """)
 
-    assert lexer.next() == Token(TokenKind.INTEGER, 1, 2)
-    assert lexer.next() == Token(TokenKind.INTEGER, 12, 3)
-    assert lexer.next() == Token(TokenKind.INTEGER, 123, 4)
+    assert lexer.next() == Token(TokenKind.INTEGER, 1, 2, (9, 11))
+    assert lexer.next() == Token(TokenKind.INTEGER, 12, 3, (40, 43))
+    assert lexer.next() == Token(TokenKind.INTEGER, 123, 4, (78, 82))
 
 def test_whitespace() -> None:
     lexer = Lexer("     ")
@@ -28,14 +28,14 @@ def test_whitespace() -> None:
         assert lexer.next().kind == TokenKind.EOF
 
 @pytest.mark.parametrize("text,token", [
-    ("// This is a comment", Token(TokenKind.EOF, None, 1)),
-    ("(", Token(TokenKind.LPAREN, None, 1)),
-    (")", Token(TokenKind.RPAREN, None, 1)),
-    ("123", Token(TokenKind.INTEGER, 123, 1)),
-    ("+", Token(TokenKind.ADD, None, 1)),
-    ("-", Token(TokenKind.SUB, None, 1)),
-    ("*", Token(TokenKind.MUL, None, 1)),
-    ("/", Token(TokenKind.DIV, None, 1)),
+    ("// This is a comment", Token(TokenKind.EOF, None, 1, (20, 21))),
+    ("(", Token(TokenKind.LPAREN, None, 1, (0, 1))),
+    (")", Token(TokenKind.RPAREN, None, 1, (0, 1))),
+    ("123", Token(TokenKind.INTEGER, 123, 1, (0, 4))),
+    ("+", Token(TokenKind.ADD, None, 1, (0, 1))),
+    ("-", Token(TokenKind.SUB, None, 1, (0, 1))),
+    ("*", Token(TokenKind.MUL, None, 1, (0, 1))),
+    ("/", Token(TokenKind.DIV, None, 1, (0, 1))),
 ])
 def test_single(text: str, token: Token) -> None:
     lexer = Lexer(text)
