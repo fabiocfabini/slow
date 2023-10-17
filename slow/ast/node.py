@@ -15,9 +15,5 @@ class NodeVisitor(ABC):
         pass
 
     @abstractmethod
-    def visit_grouping(self, node: Node) -> None:
-        pass
-
-    @abstractmethod
     def visit_binary(self, node: Node) -> None:
         pass

@@ -7,7 +7,6 @@ from enum import Enum, auto
 from ..ast.node import Node
 from ..ast.literal import LiteralIntegerNode
 from ..ast.binary import BinaryNode
-from ..ast.grouping import GroupingNode
 from .lexer import Lexer
 from .lexeme import Token, TokenKind
 
@@ -120,7 +119,7 @@ class Parser:
 
         if self._match(TokenKind.RPAREN):
             assert expression is not None
-            return GroupingNode(expression)
+            return expression
 
         self._parser_error(f"Expected ')' after expression. Got {self.current.value}")
         return None
