@@ -46,6 +46,9 @@ class Lexer:
         self._rebase()
         return token
 
+    def lexeme_at_token(self, token: Token) -> str:
+        return self.source[token.span[0] : token.span[1]]
+
     def _is_at_end(self) -> bool:
         return self.current >= len(self.source)
 
@@ -90,7 +93,7 @@ class Lexer:
         self._rebase()
 
     def _make_token(self, kind: TokenKind, value: TokenValue = None) -> Token:
-        return Token(kind, value, self.line)
+        return Token(kind, value, self.line, (self.start, self.current + 1))
 
     def _make_error(self, msg: str) -> Token:
         # TODO: Improve reporting (file:line:column lex error: msg)
@@ -101,9 +104,11 @@ class Lexer:
             self._advance()
 
         value: int = int(self.source[self.start : self.current])
-        self._rebase()
+        token = self._make_token(TokenKind.INTEGER, value)
 
-        return self._make_token(TokenKind.INTEGER, value)
+        self._rebase()
+        return token
+
 
 
 if __name__ == "__main__":

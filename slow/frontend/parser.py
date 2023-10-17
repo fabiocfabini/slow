@@ -94,6 +94,7 @@ class Parser:
 
         assert self._current is not None
         if self._current.kind == TokenKind.ERROR:
+            assert self._lexer is not None
             print(f"Lexer error: {self._current.value}")
 
     def _parser_error(self, message: str) -> None:
@@ -125,8 +126,9 @@ class Parser:
             assert expression is not None
             return expression
 
+        assert self._lexer is not None
         assert self._current is not None
-        self._parser_error(f"Expected ')' after expression. Got {self._current.value}")
+        self._parser_error(f"Expected ')' after expression. Got '{self._lexer.lexeme_at_token(self._current)}'")
         return None
 
     def _binary(self, lhs: Node) -> Optional[Node]:
@@ -151,19 +153,23 @@ class Parser:
         prefix_rule =  Parser._expression_rule_table[self._previous.kind].prefix
 
         if prefix_rule is None:
-            self._parser_error(f"Expected expression. Got {self._previous.value}")
+            assert self._lexer is not None
+            assert self._current is not None
+            self._parser_error(f"Expected expression. Got '{self._lexer.lexeme_at_token(self._previous)}'")
             return None
 
         lhs = prefix_rule(self)
 
         rule: ExpressionParseRule
         assert self._current is not None
-        while precedence.value <= (rule := Parser._expression_rule_table[self._current.kind]).precedence.value:  # pylint: disable=C0301
+        while precedence.value <= (rule := Parser._expression_rule_table[self._current.kind]).precedence.value:
             self._advance()
             infix_rule = rule.infix
 
             if infix_rule is None:
-                self._parser_error(f"Expected binary operator. Got {self._current.value}")
+                assert self._lexer is not None
+                assert self._current is not None
+                self._parser_error(f"Expected binary operator. Got '{self._lexer.lexeme_at_token(self._previous)}'")
                 return None
 
             assert lhs is not None
