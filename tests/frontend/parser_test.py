@@ -1,19 +1,75 @@
+import pytest
+
 from slow.frontend.parser import Parser
 
 from slow.ast.literal import LiteralIntegerNode
 from slow.ast.binary import BinaryNode, BinaryOperator
+from slow._exceptions import ParserError, LexerError
 
-def test_expression() -> None:
-    parser = Parser()
 
-    ast = BinaryNode(
-        BinaryNode(
-            LiteralIntegerNode(1, 1),
-            LiteralIntegerNode(2, 1),
-            BinaryOperator.ADD,
+class TestParserError:
+    @pytest.mark.xfail()
+    def test_missing_rparen_fail(self):
+        with pytest.raises(ParserError) as excinfo:
+            Parser(True).parse("1 + (2")
+
+        assert "Expected ')' after expression. Got ''" == str(excinfo.value)
+
+    @pytest.mark.xfail()
+    @pytest.mark.parametrize("expression, expected_error_message", [
+        ("1 +", "Expected expression. Got ''"),
+        ("1 + -", "Expected expression. Got '-'"),
+    ])
+    def test_expected_expression_fail(self, expression, expected_error_message):
+        with pytest.raises(ParserError) as excinfo:
+            Parser(True).parse(expression)
+
+        assert expected_error_message == str(excinfo.value)
+
+
+class TestParserExpression:
+    @pytest.mark.parametrize("expression, expected", [
+        (
+            "1", 
+            LiteralIntegerNode(1, 1)
         ),
-        LiteralIntegerNode(2, 1),
-        BinaryOperator.MUL,
-    )
+    ])
+    def test_primary_expression(self, expression, expected):
+        assert expected == Parser(True).parse(expression)
 
-    assert parser.parse("(1 + 2) * 2 ") == ast
+    @pytest.mark.parametrize("expression, expected", [
+        (
+            "1 + 2",
+            BinaryNode(
+                LiteralIntegerNode(1, 1), 
+                LiteralIntegerNode(2, 1), 
+                BinaryOperator.ADD
+            )
+        ),
+        (
+            "1 + 2 * 2",
+            BinaryNode(
+                LiteralIntegerNode(1, 1),
+                BinaryNode(
+                    LiteralIntegerNode(2, 1), 
+                    LiteralIntegerNode(2, 1),
+                    BinaryOperator.MUL
+                ),
+                BinaryOperator.ADD
+            )
+        ),
+        (
+            "(1 + 2) * 2",
+            BinaryNode(
+                BinaryNode(
+                    LiteralIntegerNode(1, 1),
+                    LiteralIntegerNode(2, 1),
+                    BinaryOperator.ADD
+                ),
+                LiteralIntegerNode(2, 1),
+                BinaryOperator.MUL
+            )
+        ),
+    ])
+    def test_binary_expression(self, expression, expected):
+        assert expected == Parser(True).parse(expression)

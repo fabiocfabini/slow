@@ -4,6 +4,7 @@ from typing import Optional, Callable, ClassVar, Dict
 from dataclasses import dataclass
 from enum import Enum, auto
 
+from .._exceptions import ParserError, LexerError
 from ..ast.node import Node
 from ..ast.literal import LiteralIntegerNode
 from ..ast.binary import BinaryNode
@@ -36,6 +37,8 @@ class ExpressionParseRule:
 
 @dataclass
 class Parser:
+    test_mode: bool = False
+
     _lexer: Optional[Lexer] = None
     _current: Optional[Token] = None
     _previous: Optional[Token] = None
@@ -95,6 +98,10 @@ class Parser:
         assert self._current is not None
         if self._current.kind == TokenKind.ERROR:
             assert self._lexer is not None
+
+            if self.test_mode:
+                raise LexerError(str(self._current.value))
+
             print(f"Lexer error: {self._current.value}")
 
     def _parser_error(self, message: str) -> None:
@@ -103,6 +110,9 @@ class Parser:
 
         self._had_error = True
         self._panic_mode = True
+
+        if self.test_mode:
+            raise ParserError(message)
 
         print(f"Parser error: {message}")
 
