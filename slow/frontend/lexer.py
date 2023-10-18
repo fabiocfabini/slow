@@ -97,7 +97,7 @@ class Lexer:
 
     def _make_error(self, msg: str) -> Token:
         # TODO: Improve reporting (file:line:column lex error: msg)
-        return self._make_token(TokenKind.ERROR, f"{msg} at line {self.line}")
+        return self._make_token(TokenKind.ERROR, f"{msg}")
 
     def _number(self) -> Token:
         while not self._is_at_end() and self._peek().isdigit():

@@ -7,6 +7,20 @@ from slow.ast.binary import BinaryNode, BinaryOperator
 from slow._exceptions import ParserError, LexerError
 
 
+class TestLexerError:
+    @pytest.mark.xfail()
+    @pytest.mark.parametrize("expression, expected_error_message", [
+        ("1 + º", "Unexpected character: 'º'"),
+        ("1 + 2 º", "Unexpected character: 'º'"),
+        ("1 + 2 * º", "Unexpected character: 'º'"),
+    ])
+    def test_expected_integer_fail(self, expression, expected_error_message):
+        with pytest.raises(LexerError) as excinfo:
+            Parser(True).parse(expression)
+
+        assert expected_error_message == str(excinfo.value)
+
+
 class TestParserError:
     @pytest.mark.xfail()
     def test_missing_rparen_fail(self):
