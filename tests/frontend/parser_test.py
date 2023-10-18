@@ -2,6 +2,7 @@ import pytest
 
 from slow.frontend.parser import Parser
 
+from slow.ast.node import Node
 from slow.ast.literal import LiteralIntegerNode
 from slow.ast.binary import BinaryNode, BinaryOperator
 from slow._exceptions import ParserError, LexerError
@@ -14,7 +15,7 @@ class TestLexerError:
         ("1 + 2 º", "Unexpected character: 'º'"),
         ("1 + 2 * º", "Unexpected character: 'º'"),
     ])
-    def test_expected_integer_fail(self, expression, expected_error_message):
+    def test_expected_integer_fail(self, expression: str, expected_error_message: str) -> None:
         with pytest.raises(LexerError) as excinfo:
             Parser(True).parse(expression)
 
@@ -23,7 +24,7 @@ class TestLexerError:
 
 class TestParserError:
     @pytest.mark.xfail()
-    def test_missing_rparen_fail(self):
+    def test_missing_rparen_fail(self) -> None:
         with pytest.raises(ParserError) as excinfo:
             Parser(True).parse("1 + (2")
 
@@ -34,7 +35,7 @@ class TestParserError:
         ("1 +", "Expected expression. Got ''"),
         ("1 + -", "Expected expression. Got '-'"),
     ])
-    def test_expected_expression_fail(self, expression, expected_error_message):
+    def test_expected_expression_fail(self, expression: str, expected_error_message: str) -> None:
         with pytest.raises(ParserError) as excinfo:
             Parser(True).parse(expression)
 
@@ -48,7 +49,7 @@ class TestParserExpression:
             LiteralIntegerNode(1, 1)
         ),
     ])
-    def test_primary_expression(self, expression, expected):
+    def test_primary_expression(self, expression: str, expected: Node) -> None:
         assert expected == Parser(True).parse(expression)
 
     @pytest.mark.parametrize("expression, expected", [
@@ -85,5 +86,5 @@ class TestParserExpression:
             )
         ),
     ])
-    def test_binary_expression(self, expression, expected):
+    def test_binary_expression(self, expression: str, expected: Node) -> None:
         assert expected == Parser(True).parse(expression)
