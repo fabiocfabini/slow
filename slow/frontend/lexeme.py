@@ -15,6 +15,8 @@ class TokenKind(Enum):
 
     # Values
     INTEGER = auto()
+    TRUE = auto()
+    FALSE = auto()
 
     # Arithmetic operators
     ADD = auto()
@@ -30,7 +32,7 @@ class Token:
     kind: TokenKind
     value: TokenValue
     line: int
-    span: tuple[int, int]
+    span: slice
 
     def to_binary_operator(self) -> BinaryOperator:
         match self.kind:
@@ -44,16 +46,3 @@ class Token:
                 return BinaryOperator.DIV
             case _:
                 raise ValueError(f"Token {self} is not a binary operator")
-
-    def __format__(self, __format_spec: str) -> str:
-        match __format_spec:
-            case "kind":
-                return str(self.kind)
-            case "value":
-                return str(self.value)
-            case "line":
-                return str(self.line)
-            case "span":
-                return str(self.span)
-            case _:
-                return self.__repr__()

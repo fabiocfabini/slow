@@ -16,41 +16,46 @@ class Lexer:
         token: Token
         if self._is_at_end():
             return self._make_token(TokenKind.EOF)
-        char: str = self._peek()
+        char = self._peek()
         if char.isdigit():
             return self._number()
+        if self._is_alpha(char):
+            return self._identifier()
 
         match char:
             case "(":
+                self._advance()
                 token = self._make_token(TokenKind.LPAREN)
-                self._advance()
             case ")":
+                self._advance()
                 token = self._make_token(TokenKind.RPAREN)
-                self._advance()
             case "+":
+                self._advance()
                 token = self._make_token(TokenKind.ADD)
-                self._advance()
             case "-":
+                self._advance()
                 token = self._make_token(TokenKind.SUB)
-                self._advance()
             case "*":
+                self._advance()
                 token = self._make_token(TokenKind.MUL)
-                self._advance()
             case "/":
+                self._advance()
                 token = self._make_token(TokenKind.DIV)
-                self._advance()
             case _:
-                token = self._make_error(f"Unexpected character: {char}")
                 self._advance()
+                token = self._make_error(f"Unexpected character: {char}")
 
         self._rebase()
         return token
 
     def lexeme_at_token(self, token: Token) -> str:
-        return self.source[token.span[0] : token.span[1]]
+        return self.source[token.span]
 
     def _is_at_end(self) -> bool:
         return self.current >= len(self.source)
+
+    def _is_alpha(self, char: str) -> bool:
+        return char.isalpha() or char == "_"
 
     def _rebase(self) -> None:
         self.start = self.current
@@ -93,7 +98,7 @@ class Lexer:
         self._rebase()
 
     def _make_token(self, kind: TokenKind, value: TokenValue = None) -> Token:
-        return Token(kind, value, self.line, (self.start, self.current + 1))
+        return Token(kind, value, self.line, slice(self.start, self.current))
 
     def _make_error(self, msg: str) -> Token:
         # TODO: Improve reporting (file:line:column lex error: msg)
@@ -109,12 +114,21 @@ class Lexer:
         self._rebase()
         return token
 
+    def _make_id_or_keyword(self, value: str) -> Token:
+        match value:
+            case "true":
+                return self._make_token(TokenKind.TRUE)
+            case "false":
+                return self._make_token(TokenKind.FALSE)
+            case _:
+                raise NotImplementedError(f"Identifier {value} is not implemented")
 
+    def _identifier(self) -> Token:
+        while not self._is_at_end() and self._is_alpha(self._peek()):
+            self._advance()
 
-if __name__ == "__main__":
-    lexer = Lexer("1-12+123")
+        value: str = self.source[self.start : self.current]
+        token = self._make_id_or_keyword(value)
 
-    while (tok := lexer.next()).kind != TokenKind.EOF:
-        print(tok)
-
-    print(tok)
+        self._rebase()
+        return token

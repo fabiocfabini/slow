@@ -54,6 +54,8 @@ class Parser:
             TokenKind.LPAREN    : ExpressionParseRule(Parser._grouping,           None, Precedence.NO_PRECEDENCE),
             TokenKind.RPAREN    : ExpressionParseRule(            None,           None, Precedence.NO_PRECEDENCE),
             TokenKind.INTEGER   : ExpressionParseRule( Parser._integer,           None, Precedence.NO_PRECEDENCE),
+            TokenKind.TRUE      : ExpressionParseRule(    Parser._true,           None, Precedence.NO_PRECEDENCE),
+            TokenKind.FALSE     : ExpressionParseRule(   Parser._false,           None, Precedence.NO_PRECEDENCE),
             TokenKind.ADD       : ExpressionParseRule(            None, Parser._binary, Precedence.TERM         ),
             TokenKind.SUB       : ExpressionParseRule(            None, Parser._binary, Precedence.TERM         ),
             TokenKind.MUL       : ExpressionParseRule(            None, Parser._binary, Precedence.FACTOR       ),
@@ -122,6 +124,14 @@ class Parser:
             return True
 
         return False
+
+    def _true(self) -> Optional[Node]:
+        assert self._previous is not None
+        return LiteralIntegerNode(1, self._previous.line)
+
+    def _false(self) -> Optional[Node]:
+        assert self._previous is not None
+        return LiteralIntegerNode(0, self._previous.line)
 
     def _integer(self) -> Optional[Node]:
         assert self._previous is not None
