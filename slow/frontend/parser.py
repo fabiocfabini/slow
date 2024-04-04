@@ -4,13 +4,12 @@ from typing import Optional, Callable, ClassVar, Dict
 from dataclasses import dataclass
 from enum import Enum, auto
 
-from .._exceptions import ParserError, LexerError
-from ..ast.node import Node
-from ..ast.literal import LiteralIntegerNode
-from ..ast.binary import BinaryNode
-from .lexer import Lexer
+from slow._exceptions import ParserError, LexerError
+from slow.node import Node
+from slow.ast.literal import LiteralIntegerNode
+from slow.ast.binary import BinaryNode
 from .lexeme import Token, TokenKind
-
+from .lexer import Lexer
 
 class Precedence(Enum):
     NO_PRECEDENCE   = auto()
