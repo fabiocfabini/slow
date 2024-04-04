@@ -2,7 +2,7 @@ import pytest
 
 from slow.frontend.parser import Parser
 
-from slow.ast.node import Node
+from slow.node import Node
 from slow.ast.literal import LiteralIntegerNode
 from slow.ast.binary import BinaryNode, BinaryOperator
 from slow._exceptions import ParserError, LexerError

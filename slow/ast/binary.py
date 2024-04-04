@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from enum import Enum, auto
 
-from .node import Node, NodeVisitor
+from slow.node import Node, NodeVisitor
 
 
 class BinaryOperator(Enum):
@@ -9,6 +9,19 @@ class BinaryOperator(Enum):
     SUB = auto()
     MUL = auto()
     DIV = auto()
+
+    def to_asm(self) -> str:
+        match self:
+            case BinaryOperator.ADD:
+                return "add"
+            case BinaryOperator.SUB:
+                return "sub"
+            case BinaryOperator.MUL:
+                return "mul"
+            case BinaryOperator.DIV:
+                return "div"
+            case _:
+                raise ValueError(f"Binary operator {self} is not supported")
 
     def __str__(self) -> str:
         match self:
@@ -34,4 +47,7 @@ class BinaryNode(Node):
         visitor.visit_binary(self)
 
     def __str__(self) -> str:
-        return f"({self.lhs} {self.op.__str__()} {self.rhs})"
+        return f"({self.lhs} {self.op} {self.rhs})"
+
+    def __hash__(self) -> int:
+        return hash((self.lhs, self.rhs, self.op))

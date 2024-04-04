@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from .node import Node, NodeVisitor
+from ..node import Node, NodeVisitor
 
 
 @dataclass
