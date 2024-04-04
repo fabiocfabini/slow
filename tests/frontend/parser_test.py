@@ -45,7 +45,19 @@ class TestParserError:
 class TestParserExpression:
     @pytest.mark.parametrize("expression, expected", [
         (
-            "1", 
+            "1",
+            LiteralIntegerNode(1, 1)
+        ),
+        (
+            "true",
+            LiteralIntegerNode(1, 1)
+        ),
+        (
+            "false",
+            LiteralIntegerNode(0, 1)
+        ),
+        (
+            "(1)",
             LiteralIntegerNode(1, 1)
         ),
     ])
@@ -56,8 +68,8 @@ class TestParserExpression:
         (
             "1 + 2",
             BinaryNode(
-                LiteralIntegerNode(1, 1), 
-                LiteralIntegerNode(2, 1), 
+                LiteralIntegerNode(1, 1),
+                LiteralIntegerNode(2, 1),
                 BinaryOperator.ADD
             )
         ),
@@ -66,7 +78,7 @@ class TestParserExpression:
             BinaryNode(
                 LiteralIntegerNode(1, 1),
                 BinaryNode(
-                    LiteralIntegerNode(2, 1), 
+                    LiteralIntegerNode(2, 1),
                     LiteralIntegerNode(2, 1),
                     BinaryOperator.MUL
                 ),
