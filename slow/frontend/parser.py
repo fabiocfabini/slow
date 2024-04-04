@@ -125,6 +125,7 @@ class Parser:
 
         return False
 
+    # NOTE: Booleans are glorified integers
     def _true(self) -> Optional[Node]:
         assert self._previous is not None
         return LiteralIntegerNode(1, self._previous.line)
