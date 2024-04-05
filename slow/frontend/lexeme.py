@@ -2,7 +2,7 @@ from enum import Enum, auto
 from typing import Union
 from dataclasses import dataclass
 
-from ..ast.binary import BinaryOperator
+from slow.ast.binary import BinaryOperator
 
 class TokenKind(Enum):
     # Special
@@ -11,6 +11,8 @@ class TokenKind(Enum):
     ID = auto()
 
     # Single-character
+    SEMICOLON = auto()
+    ASSIGN = auto()
     LPAREN = auto()
     RPAREN = auto()
 
@@ -24,6 +26,9 @@ class TokenKind(Enum):
     SUB = auto()
     MUL = auto()
     DIV = auto()
+
+    # Keywords
+    LET = auto()
 
 
 TokenValue = Union[int, str, None]

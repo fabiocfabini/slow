@@ -5,15 +5,17 @@ from dataclasses import dataclass, field
 from enum import Enum, auto
 
 from slow._exceptions import ParserError, LexerError
-from slow.node import Node
+from slow.node import Node, StatementNode, ExpressionNode
 from slow.ast.literal import LiteralIntegerNode
 from slow.ast.binary import BinaryNode
 from slow.ast.identifier import IdentifierNode
+from slow.ast.let import LetDeclarationNode, LetAssignmentNode
+from slow.ast.program import ProgramNode
 from .lexeme import Token, TokenKind
 from .lexer import Lexer
 
 class Precedence(Enum):
-    NO_PRECEDENCE   = auto()
+    NO_PRECEDENCE   = auto() # ;
     ASSIGNMENT      = auto() # =
     # TERNARY         = auto() # ? :
     # OR              = auto() # or
@@ -30,14 +32,19 @@ class Precedence(Enum):
 
 @dataclass
 class ExpressionParseRule:
-    prefix: Optional[Callable[[Parser], Optional[Node]]]
-    infix: Optional[Callable[[Parser, Node], Optional[Node]]]
+    prefix: Optional[Callable[[Parser], Optional[ExpressionNode]]]
+    infix: Optional[Callable[[Parser, Node], Optional[ExpressionNode]]]
     precedence: Precedence
+
+@dataclass
+class StatementParseRule:
+    rule: Callable[[Parser], Optional[StatementNode]]
 
 
 @dataclass
 class Parser:
     test_mode: bool = False
+    expression_mode: bool = False
 
     _identifier_table: set[IdentifierNode] = field(default_factory=set)
 
@@ -47,24 +54,30 @@ class Parser:
     _had_error: bool = field(init=False, default=False)
     _panic_mode: bool = field(init=False, default=False)
 
-
     _expression_rule_table: ClassVar[Dict[TokenKind, ExpressionParseRule]]
+    _statement_rule_table: ClassVar[Dict[TokenKind, StatementParseRule]]
 
 # pylint: disable=C0301
     def __post_init__(self) -> None:
         Parser._expression_rule_table = {
-            TokenKind.EOF       : ExpressionParseRule(            None,           None, Precedence.NO_PRECEDENCE),
-            TokenKind.ERROR     : ExpressionParseRule(            None,           None, Precedence.NO_PRECEDENCE),
-            TokenKind.ID        : ExpressionParseRule(      Parser._id,           None, Precedence.NO_PRECEDENCE),
-            TokenKind.LPAREN    : ExpressionParseRule(Parser._grouping,           None, Precedence.NO_PRECEDENCE),
-            TokenKind.RPAREN    : ExpressionParseRule(            None,           None, Precedence.NO_PRECEDENCE),
-            TokenKind.INTEGER   : ExpressionParseRule( Parser._integer,           None, Precedence.NO_PRECEDENCE),
-            TokenKind.TRUE      : ExpressionParseRule(    Parser._true,           None, Precedence.NO_PRECEDENCE),
-            TokenKind.FALSE     : ExpressionParseRule(   Parser._false,           None, Precedence.NO_PRECEDENCE),
-            TokenKind.ADD       : ExpressionParseRule(            None, Parser._binary, Precedence.TERM         ),
-            TokenKind.SUB       : ExpressionParseRule(            None, Parser._binary, Precedence.TERM         ),
-            TokenKind.MUL       : ExpressionParseRule(            None, Parser._binary, Precedence.FACTOR       ),
-            TokenKind.DIV       : ExpressionParseRule(            None, Parser._binary, Precedence.FACTOR       ),
+            TokenKind.EOF       : ExpressionParseRule(              None,           None, Precedence.NO_PRECEDENCE),
+            TokenKind.ERROR     : ExpressionParseRule(              None,           None, Precedence.NO_PRECEDENCE),
+            TokenKind.ID        : ExpressionParseRule(        Parser._id,           None, Precedence.NO_PRECEDENCE),
+            TokenKind.SEMICOLON : ExpressionParseRule(              None,           None, Precedence.NO_PRECEDENCE),
+            TokenKind.ASSIGN    : ExpressionParseRule(Parser._expression,           None, Precedence.ASSIGNMENT    ),
+            TokenKind.LPAREN    : ExpressionParseRule(  Parser._grouping,           None, Precedence.NO_PRECEDENCE),
+            TokenKind.RPAREN    : ExpressionParseRule(              None,           None, Precedence.NO_PRECEDENCE),
+            TokenKind.INTEGER   : ExpressionParseRule(   Parser._integer,           None, Precedence.NO_PRECEDENCE),
+            TokenKind.TRUE      : ExpressionParseRule(      Parser._true,           None, Precedence.NO_PRECEDENCE),
+            TokenKind.FALSE     : ExpressionParseRule(     Parser._false,           None, Precedence.NO_PRECEDENCE),
+            TokenKind.ADD       : ExpressionParseRule(              None, Parser._binary, Precedence.TERM         ),
+            TokenKind.SUB       : ExpressionParseRule(              None, Parser._binary, Precedence.TERM         ),
+            TokenKind.MUL       : ExpressionParseRule(              None, Parser._binary, Precedence.FACTOR       ),
+            TokenKind.DIV       : ExpressionParseRule(              None, Parser._binary, Precedence.FACTOR       ),
+        }
+
+        Parser._statement_rule_table = {
+            TokenKind.LET       : StatementParseRule(Parser._let),
         }
 # pylint: enable=C0301
 
@@ -73,7 +86,9 @@ class Parser:
 
         self._advance()
 
-        return self._expression()
+        if self.expression_mode:
+            return self._expression()
+        return self._program()
 
     def _reset(self, source: str) -> None:
         self._lexer = Lexer(source)
@@ -86,7 +101,6 @@ class Parser:
         self._previous = self._current
 
         while True:
-            assert self._lexer is not None
             self._current = self._lexer.next()
 
             if self._current.kind != TokenKind.ERROR:
@@ -103,7 +117,6 @@ class Parser:
 
         assert self._current is not None
         if self._current.kind == TokenKind.ERROR:
-            assert self._lexer is not None
 
             if self.test_mode:
                 raise LexerError(str(self._current.value))
@@ -131,23 +144,23 @@ class Parser:
         return False
 
     # NOTE: Booleans are glorified integers
-    def _true(self) -> Optional[Node]:
+    def _true(self) -> Optional[ExpressionNode]:
         assert self._previous is not None
 
         return LiteralIntegerNode(1, self._previous.line)
 
-    def _false(self) -> Optional[Node]:
+    def _false(self) -> Optional[ExpressionNode]:
         assert self._previous is not None
 
         return LiteralIntegerNode(0, self._previous.line)
 
-    def _integer(self) -> Optional[Node]:
+    def _integer(self) -> Optional[ExpressionNode]:
         assert self._previous is not None
         assert isinstance(self._previous.value, int)
 
         return LiteralIntegerNode(self._previous.value, self._previous.line)
 
-    def _id(self) -> Optional[Node]:
+    def _id(self) -> Optional[ExpressionNode]:
         assert self._previous is not None
         assert isinstance(self._previous.value, str)
 
@@ -158,19 +171,18 @@ class Parser:
         self._parser_error(f"Undefined identifier '{node}'")
         return None
 
-    def _grouping(self) -> Optional[Node]:
+    def _grouping(self) -> Optional[ExpressionNode]:
         expression = self._expression()
 
         if self._match(TokenKind.RPAREN):
             assert expression is not None
             return expression
 
-        assert self._lexer is not None
         assert self._current is not None
         self._parser_error(f"Expected ')' after expression. Got '{self._lexer.lexeme_at_token(self._current)}'")
         return None
 
-    def _binary(self, lhs: Node) -> Optional[Node]:
+    def _binary(self, lhs: Node) -> Optional[ExpressionNode]:
         tok_op = self._previous
 
         assert tok_op is not None
@@ -182,14 +194,13 @@ class Parser:
 
         return None
 
-    def _parse_precedence(self, precedence: Precedence) -> Optional[Node]:
+    def _parse_precedence(self, precedence: Precedence) -> Optional[ExpressionNode]:
         self._advance()
 
         assert self._previous is not None
         prefix_rule =  Parser._expression_rule_table[self._previous.kind].prefix
 
         if prefix_rule is None:
-            assert self._lexer is not None
             assert self._current is not None
             self._parser_error(f"Expected expression. Got '{self._lexer.lexeme_at_token(self._previous)}'")
             return None
@@ -203,7 +214,6 @@ class Parser:
             infix_rule = rule.infix
 
             if infix_rule is None:
-                assert self._lexer is not None
                 assert self._current is not None
                 self._parser_error(f"Expected binary operator. Got '{self._lexer.lexeme_at_token(self._previous)}'")
                 return None
@@ -215,5 +225,74 @@ class Parser:
 
         return lhs
 
-    def _expression(self) -> Optional[Node]:
+    def _expression(self) -> Optional[ExpressionNode]:
         return self._parse_precedence(Precedence.ASSIGNMENT)
+
+    def _create_identifier(self) -> Optional[IdentifierNode]:
+        assert self._previous is not None
+        assert isinstance(self._previous.value, str)
+
+        node = IdentifierNode(self._previous.value)
+        if node in self._identifier_table:
+            self._parser_error(f"Identifier '{node}' already declared")
+            return None
+
+        self._identifier_table.add(node)
+        return node
+
+    def _let(self) -> Optional[StatementNode]:
+        assert self._previous is not None
+
+        if not self._match(TokenKind.ID):
+            assert self._current is not None
+            self._parser_error(f"Expected identifier. Got '{self._lexer.lexeme_at_token(self._current)}'")
+            return None
+
+        if not (identifier := self._create_identifier()):
+            return None
+
+        assert self._current is not None
+        match self._current.kind:
+            case TokenKind.SEMICOLON:
+                return LetDeclarationNode(identifier)
+            case TokenKind.ASSIGN:
+                expression = self._expression()
+                if expression is None:
+                    return None
+
+                return LetAssignmentNode(identifier, expression)
+            case _:
+                self._parser_error(f"Expected ';' or '=' after identifier in 'let' statement. Got '{self._lexer.lexeme_at_token(self._current)}'")
+                return None
+
+    def _statement(self) -> Optional[StatementNode]:
+        assert self._current is not None
+        rule = Parser._statement_rule_table[self._current.kind].rule
+
+        if rule is None:
+            assert self._current is not None
+            self._parser_error(f"Expected statement. Got '{self._lexer.lexeme_at_token(self._current)}'")
+            return None
+
+        self._advance() # Consume the beginning of the statement
+
+        statement = rule(self)
+        if statement is None:
+            return None
+
+        if not self._match(TokenKind.SEMICOLON):
+            assert self._current is not None
+            self._parser_error(f"Expected ';' after statement. Got '{self._lexer.lexeme_at_token(self._current)}'")
+            return None
+
+        return statement
+
+    def _program(self) -> Optional[Node]:
+        statements: list[StatementNode] = []
+        while not self._match(TokenKind.EOF):
+            statement = self._statement()
+            if statement is None:
+                return None
+            statements.append(statement)
+
+        return ProgramNode(statements)

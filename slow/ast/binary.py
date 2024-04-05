@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from enum import Enum, auto
 
-from slow.node import Node, NodeVisitor
+from slow.node import Node, ExpressionNode, NodeVisitor
 
 
 class BinaryOperator(Enum):
@@ -38,7 +38,7 @@ class BinaryOperator(Enum):
 
 
 @dataclass
-class BinaryNode(Node):
+class BinaryNode(ExpressionNode):
     lhs: Node
     rhs: Node
     op: BinaryOperator

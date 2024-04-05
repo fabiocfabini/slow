@@ -1,0 +1,41 @@
+format ELF64 executable 3
+
+segment readable executable
+
+define SYS_EXIT 60
+define SYS_WRITE 1
+
+define STDOUT 1
+
+return_message_size:
+        mov     rax, msg_size          ; return the size of the message
+        ret
+
+change_message_character:
+        lea     rbx, [msg + rdi]
+        add     [rbx], rsi
+        ; mov     [msg+1], dil
+        ; add     byte [msg+1], 3
+        ret
+
+entry $
+
+        mov     rdi, 0
+        mov     rsi, 3
+        call    change_message_character
+        call    return_message_size
+        mov     edx,eax         ; CPU zero extends 32-bit operation to 64-bit
+                                ; we can use less bytes than in case mov rdx,...
+        lea     rsi, [msg]
+        mov     edi, STDOUT     ; STDOUT
+        mov     eax, SYS_WRITE  ; sys_write
+        syscall
+
+        xor     edi,edi         ; exit code 0
+        mov     eax, SYS_EXIT   ; sys_exit
+        syscall
+
+segment readable writeable
+
+msg db 'Hello 64-bit world!',0xA
+msg_size = $-msg

@@ -18,7 +18,7 @@ class TestLexerError:
     ])
     def test_expected_integer_fail(self, expression: str, expected_error_message: str) -> None:
         with pytest.raises(LexerError) as excinfo:
-            Parser(True).parse(expression)
+            Parser(True, True).parse(expression)
 
         assert expected_error_message == str(excinfo.value)
 
@@ -27,7 +27,7 @@ class TestParserError:
     @pytest.mark.xfail()
     def test_missing_rparen_fail(self) -> None:
         with pytest.raises(ParserError) as excinfo:
-            Parser(True).parse("1 + (2")
+            Parser(True, True).parse("1 + (2")
 
         assert "Expected ')' after expression. Got ''" == str(excinfo.value)
 
@@ -39,7 +39,7 @@ class TestParserError:
     ])
     def test_expected_expression_fail(self, expression: str, expected_error_message: str) -> None:
         with pytest.raises(ParserError) as excinfo:
-            Parser(True).parse(expression)
+            Parser(True, True).parse(expression)
 
         assert expected_error_message == str(excinfo.value)
 
@@ -64,7 +64,7 @@ class TestParserExpression:
         ),
     ])
     def test_primary_expression(self, expression: str, expected: Node) -> None:
-        assert expected == Parser(True).parse(expression)
+        assert expected == Parser(True, True).parse(expression)
 
     @pytest.mark.parametrize("expression, expected", [
         (
@@ -101,4 +101,4 @@ class TestParserExpression:
         ),
     ])
     def test_binary_expression(self, expression: str, expected: Node) -> None:
-        assert expected == Parser(True).parse(expression)
+        assert expected == Parser(True, True).parse(expression)

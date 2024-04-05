@@ -1,10 +1,10 @@
 from dataclasses import dataclass
 
-from ..node import Node, NodeVisitor
+from ..node import ExpressionNode, NodeVisitor
 
 
 @dataclass
-class LiteralIntegerNode(Node):
+class LiteralIntegerNode(ExpressionNode):
     value: int
     line: int
 

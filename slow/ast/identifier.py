@@ -1,10 +1,10 @@
 from dataclasses import dataclass
 
-from ..node import Node, NodeVisitor
+from ..node import ExpressionNode, NodeVisitor
 
 
 @dataclass
-class IdentifierNode(Node):
+class IdentifierNode(ExpressionNode):
     name: str
     # NOTE: Only supports integer types
 

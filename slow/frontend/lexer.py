@@ -27,6 +27,12 @@ class Lexer:
             return self._identifier()
 
         match char:
+            case ";":
+                self._advance()
+                token = self._make_token(TokenKind.SEMICOLON)
+            case "=":
+                self._advance()
+                token = self._make_token(TokenKind.ASSIGN)
             case "(":
                 self._advance()
                 token = self._make_token(TokenKind.LPAREN)
@@ -121,6 +127,8 @@ class Lexer:
                 return self._make_token(TokenKind.TRUE)
             case "false":
                 return self._make_token(TokenKind.FALSE)
+            case "let":
+                return self._make_token(TokenKind.LET)
             case _:
                 return self._make_token(TokenKind.ID, value)
 
