@@ -38,6 +38,8 @@ def test_whitespace() -> None:
     ("/", Token(TokenKind.DIV, None, 1, slice(0, 1))),
     ("true", Token(TokenKind.TRUE, None, 1, slice(0, 4))),
     ("false", Token(TokenKind.FALSE, None, 1, slice(0, 5))),
+    ("x", Token(TokenKind.ID, "x", 1, slice(0, 1))),
+    ("_m12m12_12", Token(TokenKind.ID, "_m12m12_12", 1, slice(0, 10))),
 ])
 def test_single(text: str, token: Token) -> None:
     lexer = Lexer(text)
@@ -46,7 +48,7 @@ def test_single(text: str, token: Token) -> None:
 
 
 @pytest.mark.parametrize("text,tokens", [
-    ("+-*/()1true false", [
+    ("+-*/()1true false _m12m12_12", [
         Token(TokenKind.ADD, None, 1, slice(0, 1)),
         Token(TokenKind.SUB, None, 1, slice(1, 2)),
         Token(TokenKind.MUL, None, 1, slice(2, 3)),
@@ -56,6 +58,7 @@ def test_single(text: str, token: Token) -> None:
         Token(TokenKind.INTEGER, 1, 1, slice(6, 7)),
         Token(TokenKind.TRUE, None, 1, slice(7, 11)),
         Token(TokenKind.FALSE, None, 1, slice(12, 17)),
+        Token(TokenKind.ID, "_m12m12_12", 1, slice(18, 28)),
     ]),
 ])
 def test_multiple(text: str, tokens: list[Token]) -> None:

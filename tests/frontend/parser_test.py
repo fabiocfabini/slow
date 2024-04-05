@@ -14,6 +14,7 @@ class TestLexerError:
         ("1 + º", "Unexpected character: 'º'"),
         ("1 + 2 º", "Unexpected character: 'º'"),
         ("1 + 2 * º", "Unexpected character: 'º'"),
+        ("º + 2 * 4", "Unexpected character: 'º'"),
     ])
     def test_expected_integer_fail(self, expression: str, expected_error_message: str) -> None:
         with pytest.raises(LexerError) as excinfo:
@@ -34,6 +35,7 @@ class TestParserError:
     @pytest.mark.parametrize("expression, expected_error_message", [
         ("1 +", "Expected expression. Got ''"),
         ("1 + -", "Expected expression. Got '-'"),
+        ("x + 1", "Unknown identifier: 'x'"),
     ])
     def test_expected_expression_fail(self, expression: str, expected_error_message: str) -> None:
         with pytest.raises(ParserError) as excinfo:
