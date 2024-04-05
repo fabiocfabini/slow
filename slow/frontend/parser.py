@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 from typing import Optional, Callable, ClassVar, Dict
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum, auto
 
 from slow._exceptions import ParserError, LexerError
 from slow.node import Node
 from slow.ast.literal import LiteralIntegerNode
 from slow.ast.binary import BinaryNode
+from slow.ast.identifier import IdentifierNode
 from .lexeme import Token, TokenKind
 from .lexer import Lexer
 
@@ -38,11 +39,14 @@ class ExpressionParseRule:
 class Parser:
     test_mode: bool = False
 
-    _lexer: Optional[Lexer] = None
-    _current: Optional[Token] = None
-    _previous: Optional[Token] = None
-    _had_error: bool = False
-    _panic_mode: bool = False
+    _identifier_table: set[IdentifierNode] = field(default_factory=set)
+
+    _lexer: Lexer = field(init=False, repr=False)
+    _current: Optional[Token] = field(init=False, default=None)
+    _previous: Optional[Token] = field(init=False, default=None)
+    _had_error: bool = field(init=False, default=False)
+    _panic_mode: bool = field(init=False, default=False)
+
 
     _expression_rule_table: ClassVar[Dict[TokenKind, ExpressionParseRule]]
 
@@ -51,6 +55,7 @@ class Parser:
         Parser._expression_rule_table = {
             TokenKind.EOF       : ExpressionParseRule(            None,           None, Precedence.NO_PRECEDENCE),
             TokenKind.ERROR     : ExpressionParseRule(            None,           None, Precedence.NO_PRECEDENCE),
+            TokenKind.ID        : ExpressionParseRule(      Parser._id,           None, Precedence.NO_PRECEDENCE),
             TokenKind.LPAREN    : ExpressionParseRule(Parser._grouping,           None, Precedence.NO_PRECEDENCE),
             TokenKind.RPAREN    : ExpressionParseRule(            None,           None, Precedence.NO_PRECEDENCE),
             TokenKind.INTEGER   : ExpressionParseRule( Parser._integer,           None, Precedence.NO_PRECEDENCE),
@@ -128,16 +133,30 @@ class Parser:
     # NOTE: Booleans are glorified integers
     def _true(self) -> Optional[Node]:
         assert self._previous is not None
+
         return LiteralIntegerNode(1, self._previous.line)
 
     def _false(self) -> Optional[Node]:
         assert self._previous is not None
+
         return LiteralIntegerNode(0, self._previous.line)
 
     def _integer(self) -> Optional[Node]:
         assert self._previous is not None
         assert isinstance(self._previous.value, int)
+
         return LiteralIntegerNode(self._previous.value, self._previous.line)
+
+    def _id(self) -> Optional[Node]:
+        assert self._previous is not None
+        assert isinstance(self._previous.value, str)
+
+        node = IdentifierNode(self._previous.value)
+        if node in self._identifier_table:
+            return node
+
+        self._parser_error(f"Undefined identifier '{node}'")
+        return None
 
     def _grouping(self) -> Optional[Node]:
         expression = self._expression()
@@ -162,9 +181,6 @@ class Parser:
             return BinaryNode(lhs, rhs, tok_op.to_binary_operator())
 
         return None
-
-    def _expression(self) -> Optional[Node]:
-        return self._parse_precedence(Precedence.ASSIGNMENT)
 
     def _parse_precedence(self, precedence: Precedence) -> Optional[Node]:
         self._advance()
@@ -192,7 +208,12 @@ class Parser:
                 self._parser_error(f"Expected binary operator. Got '{self._lexer.lexeme_at_token(self._previous)}'")
                 return None
 
-            assert lhs is not None
-            lhs = infix_rule(self, lhs)
+            if lhs is not None:
+                lhs = infix_rule(self, lhs)
+            else:
+                return None
 
         return lhs
+
+    def _expression(self) -> Optional[Node]:
+        return self._parse_precedence(Precedence.ASSIGNMENT)

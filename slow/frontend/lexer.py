@@ -1,4 +1,6 @@
-from dataclasses import dataclass
+from typing import ClassVar
+from dataclasses import dataclass, field
+from string import ascii_letters
 
 from .lexeme import Token, TokenKind, TokenValue
 
@@ -9,6 +11,8 @@ class Lexer:
     start: int = 0
     current: int = 0
     line: int = 1
+    _head_identifier_chars: ClassVar[set[str]] = field(init=False, default=set(ascii_letters) | {"_"})
+    _tail_identifier_chars: ClassVar[set[str]] = field(init=False, default=set(ascii_letters) | set("0123456789") | {"_"})
 
     def next(self) -> Token:
         self._skip_whitespace()
@@ -19,7 +23,7 @@ class Lexer:
         char = self._peek()
         if char.isdigit():
             return self._number()
-        if self._is_alpha(char):
+        if char in self._head_identifier_chars:
             return self._identifier()
 
         match char:
@@ -53,9 +57,6 @@ class Lexer:
 
     def _is_at_end(self) -> bool:
         return self.current >= len(self.source)
-
-    def _is_alpha(self, char: str) -> bool:
-        return char.isalpha() or char == "_"
 
     def _rebase(self) -> None:
         self.start = self.current
@@ -121,10 +122,10 @@ class Lexer:
             case "false":
                 return self._make_token(TokenKind.FALSE)
             case _:
-                raise NotImplementedError(f"Identifier {value} is not implemented")
+                return self._make_token(TokenKind.ID, value)
 
     def _identifier(self) -> Token:
-        while not self._is_at_end() and self._is_alpha(self._peek()):
+        while not self._is_at_end() and self._peek() in self._tail_identifier_chars:
             self._advance()
 
         value: str = self.source[self.start : self.current]

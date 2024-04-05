@@ -8,6 +8,7 @@ class TokenKind(Enum):
     # Special
     EOF = auto()
     ERROR = auto()
+    ID = auto()
 
     # Single-character
     LPAREN = auto()
