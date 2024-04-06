@@ -102,3 +102,5 @@ class TestParserExpression:
     ])
     def test_binary_expression(self, expression: str, expected: Node) -> None:
         assert expected == Parser(True, True).parse(expression)
+
+# TODO: Add statement tests

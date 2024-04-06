@@ -78,6 +78,7 @@ class Parser:
 
         Parser._statement_rule_table = {
             TokenKind.LET       : StatementParseRule(Parser._let),
+            TokenKind.ID        : StatementParseRule(Parser._assign),
         }
 # pylint: enable=C0301
 
@@ -228,11 +229,10 @@ class Parser:
     def _expression(self) -> Optional[ExpressionNode]:
         return self._parse_precedence(Precedence.ASSIGNMENT)
 
-    def _create_identifier(self) -> Optional[IdentifierNode]:
-        assert self._previous is not None
-        assert isinstance(self._previous.value, str)
+    def _create_identifier(self, token: Token) -> Optional[IdentifierNode]:
+        assert isinstance(token.value, str)
 
-        node = IdentifierNode(self._previous.value)
+        node = IdentifierNode(token.value)
         if node in self._identifier_table:
             self._parser_error(f"Identifier '{node}' already declared")
             return None
@@ -248,22 +248,49 @@ class Parser:
             self._parser_error(f"Expected identifier. Got '{self._lexer.lexeme_at_token(self._current)}'")
             return None
 
-        if not (identifier := self._create_identifier()):
-            return None
+        # NOTE: Save the identifier token for later use
+        # Cannot create now since doing that would
+        # allow for the identifier to be used in the
+        # same statement
+        id_token = self._previous
 
         assert self._current is not None
         match self._current.kind:
             case TokenKind.SEMICOLON:
+                if (identifier := self._create_identifier(id_token)) is None:
+                    return None
+
                 return LetDeclarationNode(identifier)
             case TokenKind.ASSIGN:
                 expression = self._expression()
                 if expression is None:
                     return None
 
+                if (identifier := self._create_identifier(id_token)) is None:
+                    return None
+
                 return LetAssignmentNode(identifier, expression)
             case _:
                 self._parser_error(f"Expected ';' or '=' after identifier in 'let' statement. Got '{self._lexer.lexeme_at_token(self._current)}'")
                 return None
+
+    def _assign(self) -> Optional[StatementNode]:
+        assert self._previous is not None
+
+        if (identifier := self._id()) is None:
+            return None
+
+        if not self._match(TokenKind.ASSIGN):
+            assert self._current is not None
+            self._parser_error(f"Expected '=' after identifier. Got '{self._lexer.lexeme_at_token(self._current)}'")
+            return None
+
+        expression = self._expression()
+        if expression is None:
+            return None
+
+        assert isinstance(identifier, IdentifierNode)
+        return LetAssignmentNode(identifier, expression)
 
     def _statement(self) -> Optional[StatementNode]:
         assert self._current is not None

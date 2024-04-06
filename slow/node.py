@@ -9,6 +9,7 @@ if TYPE_CHECKING:
     from slow.ast.literal import LiteralIntegerNode
     from slow.ast.identifier import IdentifierNode
     from slow.ast.let import LetDeclarationNode, LetAssignmentNode
+    from slow.ast.assign import AssignNode
     from slow.ast.program import ProgramNode
 
 
@@ -41,6 +42,9 @@ class NodeVisitor(Protocol):
         pass
 
     def visit_let_assignment(self, node: LetAssignmentNode) -> None:
+        pass
+
+    def visit_assign(self, node: AssignNode) -> None:
         pass
 
     def visit_program(self, node: ProgramNode) -> None:
